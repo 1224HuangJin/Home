@@ -23,7 +23,7 @@ export const mainStore = defineStore("main", {
       playerLrcShow: true, // 是否显示底栏歌词
       footerBlur: true, // 底栏模糊
       playerAutoplay: true, // 是否自动播放
-      playerLoop: "all", // 循环播放 "all", "one", "none"
+      playerLoop: "false", // 循环播放 "all", "one", "none"
       playerOrder: "random", // 循环顺序 "list", "random"
     };
   },

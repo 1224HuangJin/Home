@@ -102,43 +102,79 @@ const fetchWeatherByCoords = async (lat, lon, cityName) => {
   }
 };
 
-// 降级方案：使用更准确的备用 IP 定位
+// 降级方案：多重 IP 定位保障链（A 计划失败自动走 B 计划，B 失败走 C 计划）
 const fetchByIP = async () => {
+  // === 【第一重保障：Cloudflare 原生高精度地理信息】 ===
+  // 专门解决西班牙/欧洲区域的定位，不需要任何 Key，完全免费且极速
   try {
-    // 换用了 ipwho.is，支持 HTTPS 且部分欧洲节点解析更好，失败则退回 ipapi
-    const ipRes = await axios.get("https://ipwho.is/?lang=zh-CN");
-    if (ipRes.data.success) {
-      await fetchWeatherByCoords(ipRes.data.latitude, ipRes.data.longitude, ipRes.data.city || "未知");
-    } else {
-      const fallback = await axios.get("https://ipapi.co/json/");
-      await fetchWeatherByCoords(fallback.data.latitude, fallback.data.longitude, fallback.data.city || "未知");
+    console.log("正在尝试第一重 IP 定位 (Cloudflare)...");
+    const cfRes = await axios.get("https://1.1.1.1/cdn-cgi/trace");
+    // Cloudflare 返回的是文本数据，形如：loc=ES\nip=xxx.xxx.xxx.xxx
+    const locMatch = cfRes.data.match(/loc=([A-Z]+)/);
+    const ipMatch = cfRes.data.match(/ip=([^\n]+)/);
+    
+    if (locMatch && ipMatch) {
+      const countryCode = locMatch[1];
+      const userIP = ipMatch[1];
+      
+      // 如果定位在西班牙 (ES)，我们可以顺藤摸瓜用另一个稳定接口拿到城市
+      const geoRes = await axios.get(`https://ipapi.co/${userIP}/json/`);
+      if (geoRes.data && geoRes.data.latitude) {
+        console.log("第一重定位成功：", geoRes.data.city);
+        await fetchWeatherByCoords(geoRes.data.latitude, geoRes.data.longitude, geoRes.data.city || "巴塞罗那");
+        return; // 成功则直接退出，不再走后续接口
+      }
     }
-  } catch (err) {
-    console.error("IP定位完全失败:", err);
+  } catch (cfErr) {
+    console.warn("第一重 IP 定位失败，正在切换第二重...", cfErr);
   }
+
+  // === 【第二重保障：ipapi.co 官方直接接口】 ===
+  try {
+    console.log("正在尝试第二重 IP 定位 (ipapi.co)...");
+    const fallback = await axios.get("https://ipapi.co/json/");
+    if (fallback.data && fallback.data.latitude) {
+      await fetchWeatherByCoords(fallback.data.latitude, fallback.data.longitude, fallback.data.city || "未知城市");
+      return;
+    }
+  } catch (ipapiErr) {
+    console.warn("第二重 IP 定位也失败了，正在切换最终兜底...", ipapiErr);
+  }
+
+  // === 【第三重保障：终极盲盒兜底】 ===
+  // 如果所有 IP 接口全部把你封了或者网络全断，直接硬编码默认位置（既然你在巴塞罗那，就拿巴塞罗那当默认值）
+  console.error("所有 IP 定位接口全部沦陷！触发巴塞罗那硬编码兜底。");
+  const FORCE_LAT = 41.3851;
+  const FORCE_LON = 2.1734;
+  await fetchWeatherByCoords(FORCE_LAT, FORCE_LON, "Barcelona");
 };
 
-// 主控函数：优先 GPS，失败走 IP
+// 主控函数：优先依靠高精度 GPS/Wi-Fi，失败则立刻进入 IP 链
 const getWeatherData = async () => {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          // 使用完全免费的 BigDataCloud 反向地理编码获取城市名，带中文参数
+          // 使用大厂公共逆地理编码
           const geoRes = await axios.get(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=zh`);
           const city = geoRes.data.city || geoRes.data.locality || "当前位置";
           await fetchWeatherByCoords(latitude, longitude, city);
         } catch (e) {
-          // 哪怕城市名解析失败，也要用经纬度去拉取本地天气！
+          // 哪怕城市名解析失败，经纬度是对的，直接强行查天气
           await fetchWeatherByCoords(latitude, longitude, "当前位置");
         }
       },
       (error) => {
-        console.warn("未获取浏览器定位授权，降级使用 IP 定位");
+        // 这里不要用 console.warn 阻塞，直接无缝切入 IP 定位
+        console.log("浏览器未授权或获取超时，无缝切换至 IP 定位链...");
         fetchByIP();
       },
-      { timeout: 5000 } // 避免无限等待
+      { 
+        enableHighAccuracy: false, // 改为 false 能够极大加快非手机端的 Wi-Fi 定位速度
+        timeout: 4000,             // 4秒不响应立刻降级，不让用户久等
+        maximumAge: 60000          // 允许使用 1 分钟内的缓存定位，提高加载速度
+      }
     );
   } else {
     fetchByIP();

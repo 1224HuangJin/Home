@@ -1,4 +1,11 @@
 [
+  
+  {
+    "icon": "EmailRound",
+    "iconUrl": "",
+    "name": "Gmail",
+    "link": "https://gmail.com"
+  },
   {
     "icon": "Blog",
     "iconUrl": "",
@@ -6,39 +13,33 @@
     "link": "https://blog.1224hj.top/"
   },
   {
-    "icon": "Server",
+    "icon": "Discord",
     "iconUrl": "",
-    "name": "NB优选(Mifeng的)",
-    "link": "https://www.byoip.top/"
+    "name": "Discord",
+    "link": "https://www.discord.com/app"
   },
   {
-    "icon": "Compass",
+    "icon": "InstagramFilled",
     "iconUrl": "",
-    "name": "让我为你搜索",
-    "link": "https://mfawa.top"
+    "name": "Instagram",
+    "link": "https://instagram.com"
   },
   {
-    "icon": "Fire",
+    "icon": "Youtube",
     "iconUrl": "",
-    "name": "今日热榜",
-    "link": "https://hot.mfawa.top/"
+    "name": "Youtube",
+    "link": "https://youtube.com"
   },
   {
-    "icon": "LaptopCode",
+    "icon": "Github",
     "iconUrl": "",
-    "name": "站点监测",
-    "link": "https://status.mfawa.top"
+    "name": "Github",
+    "link": "https://github.com/"
   },
   {
-    "icon": "Cloud",
+    "icon": "Spotify",
     "iconUrl": "",
-    "name": "OpenList",
-    "link": "https://file.mfawa.top/"
+    "name": "Spotify",
+    "link": "https://open.spotify.com"
   },
-  {
-    "icon": "Toolbox",
-    "iconUrl": "",
-    "name": "工具箱",
-    "link": "https://tools.mfawa.top/"
-  }
 ]

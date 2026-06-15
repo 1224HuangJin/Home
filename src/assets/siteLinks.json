@@ -1,6 +1,6 @@
 [
   {
-    "icon": "EmailRound",
+    "icon": "MailBulk",
     "iconUrl": "",
     "name": "Gmail",
     "link": "https://gmail.com"
@@ -18,7 +18,7 @@
     "link": "https://www.discord.com/app"
   },
   {
-    "icon": "InstagramFilled",
+    "icon": "Instagram",
     "iconUrl": "",
     "name": "Instagram",
     "link": "https://instagram.com"

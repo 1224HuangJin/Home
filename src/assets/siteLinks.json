@@ -1,5 +1,4 @@
 [
-  
   {
     "icon": "EmailRound",
     "iconUrl": "",
@@ -41,5 +40,5 @@
     "iconUrl": "",
     "name": "Spotify",
     "link": "https://open.spotify.com"
-  },
+  }
 ]
